@@ -131,3 +131,25 @@ test("the map zooms with its buttons and ctrl+scroll, spreading crowded teams", 
   await page.waitForTimeout(300);
   expect(Math.abs((await gap()) - before)).toBeLessThan(1);
 });
+
+test("phones reach every page through the menu", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/standings");
+  const menu = page.getByRole("button", { name: "Menu" });
+  await expect(page.getByRole("navigation", { name: "Main" })).toBeHidden();
+  await menu.click();
+  await expect(menu).toHaveAttribute("aria-expanded", "true");
+  const nav = page.getByRole("navigation", { name: "Main" });
+  await expect(nav.getByRole("link")).toHaveCount(7);
+  await expect(nav.getByRole("link", { name: "Standings" })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  await page.keyboard.press("Escape");
+  await expect(nav).toBeHidden();
+  await expect(menu).toBeFocused();
+  await menu.click();
+  await nav.getByRole("link", { name: "Leaders" }).click();
+  await expect(page).toHaveURL(/\/leaders$/);
+  await expect(menu).toHaveAttribute("aria-expanded", "false");
+});

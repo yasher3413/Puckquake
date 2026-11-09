@@ -293,7 +293,10 @@ weeks") with a goals column per team and who sits to make room; then the
 league table (changed teams first, all 32 on request). A refused trade says
 why beside the button. Closing a player list returns focus to its button.
 
-**Phones.** Long lists start short with a Show all button (team pages,
+**Phones.** Below 1024 px the header is the wordmark, search, and a Menu
+button; the page links drop down under the header as one full-width list
+(48 px rows, the current page shaded), closing on a pick, a tap elsewhere, or
+Escape. Long lists start short with a Show all button (team pages,
 `components/PhoneFold.tsx`); the footer shows team logos by division and
 the sources as one sentence; Leaders rows are one tap target each with the
 team code on top.

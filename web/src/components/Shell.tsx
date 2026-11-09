@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { NavLink, Outlet, Link, ScrollRestoration, useLocation } from "react-router";
 import { useLive } from "../live/store";
 import { useClock } from "../live/clock";
@@ -32,7 +32,7 @@ export function Shell() {
         >
           Skip to content
         </a>
-        <header className="border-b border-ice-scratch">
+        <header className="relative z-40 border-b border-ice-scratch">
           {/* Every page's content sits in the max-w-6xl column (the home map
             runs edge to edge below it), so the header lines up with it. */}
           <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-1 px-4 py-2 md:px-6">
@@ -55,52 +55,128 @@ export function Shell() {
   );
 }
 
-/** On narrow screens the links scroll sideways, and the edge fades while
- * more of them sit off screen, so a cut-off label reads as "scroll", not a bug. */
+/** Wide screens list every page in the header. Narrower ones get a Menu
+ * button that drops the same links down under the header; it closes on a
+ * pick, a tap elsewhere, or Escape. One wrapper holds both, so the tour's
+ * nav step finds whichever is showing. */
 function MainNav() {
-  const ref = useRef<HTMLElement>(null);
-  const [more, setMore] = useState(false);
+  const [open, setOpen] = useState(false);
+  const wrap = useRef<HTMLDivElement>(null);
+  const button = useRef<HTMLButtonElement>(null);
+  const panel = useId();
   const { pathname } = useLocation();
+  // A new page closes the menu; keyed on the path so the setter runs while
+  // rendering instead of in an effect.
+  const [shownFor, setShownFor] = useState(pathname);
+  if (shownFor !== pathname) {
+    setShownFor(pathname);
+    setOpen(false);
+  }
   useEffect(() => {
-    ref.current
-      ?.querySelector<HTMLElement>('[aria-current="page"]')
-      ?.scrollIntoView({ inline: "nearest", block: "nearest" });
-  }, [pathname]);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const check = () => setMore(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
-    check();
-    el.addEventListener("scroll", check, { passive: true });
-    const ro = new ResizeObserver(check);
-    ro.observe(el);
-    return () => {
-      el.removeEventListener("scroll", check);
-      ro.disconnect();
+    if (!open) return;
+    const onDown = (e: PointerEvent) => {
+      if (!wrap.current?.contains(e.target as Node)) setOpen(false);
     };
-  }, []);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      setOpen(false);
+      button.current?.focus();
+    };
+    document.addEventListener("pointerdown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
   return (
-    <nav
-      ref={ref}
-      aria-label="Main"
-      data-tour="nav"
-      className={`-mx-2 flex w-[calc(100%+1rem)] overflow-x-auto text-[14px] [scrollbar-width:none] lg:mx-0 lg:ml-auto lg:w-auto lg:gap-1 lg:overflow-visible ${more ? "[mask-image:linear-gradient(to_right,#000_calc(100%-40px),transparent)]" : ""}`}
-    >
-      {NAV.map((n) => (
-        <NavLink
-          key={n.to}
-          to={n.to}
-          end={n.end}
-          className={({ isActive }) =>
-            `inline-flex min-h-[44px] items-center whitespace-nowrap rounded-[var(--radius)] px-2 py-1 transition-colors lg:px-2.5 lg:py-1.5 ${
-              isActive ? "bg-ice-land font-semibold text-ink" : "text-ink-soft hover:text-ink"
-            }`
-          }
-        >
-          {n.label}
-        </NavLink>
-      ))}
-    </nav>
+    <div ref={wrap} data-tour="nav" className="flex items-center lg:ml-auto">
+      <button
+        ref={button}
+        type="button"
+        aria-expanded={open}
+        aria-controls={panel}
+        aria-label="Menu"
+        onClick={() => setOpen((o) => !o)}
+        className="-mr-2 inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-[var(--radius)] text-ink-soft hover:text-ink aria-expanded:text-ink lg:hidden"
+      >
+        <MenuIcon open={open} />
+      </button>
+      <nav aria-label="Main" className="hidden text-[14px] lg:flex lg:gap-1">
+        {NAV.map((n) => (
+          <NavLink
+            key={n.to}
+            to={n.to}
+            end={n.end}
+            className={({ isActive }) =>
+              `inline-flex min-h-[44px] items-center whitespace-nowrap rounded-[var(--radius)] px-2.5 py-1.5 transition-colors ${
+                isActive ? "bg-ice-land font-semibold text-ink" : "text-ink-soft hover:text-ink"
+              }`
+            }
+          >
+            {n.label}
+          </NavLink>
+        ))}
+      </nav>
+      <nav
+        id={panel}
+        aria-label="Main"
+        hidden={!open}
+        className="menu-drop absolute inset-x-0 top-full border-b border-ice-scratch bg-ice shadow-[0_10px_24px_-8px_rgba(10,20,30,0.18)] lg:hidden"
+      >
+        <ul className="mx-auto max-w-6xl px-2 py-2 md:px-4">
+          {NAV.map((n) => (
+            <li key={n.to}>
+              <NavLink
+                to={n.to}
+                end={n.end}
+                onClick={() => setOpen(false)}
+                className={({ isActive }) =>
+                  `flex min-h-[48px] items-center rounded-[var(--radius)] px-2 text-[17px] ${
+                    isActive ? "bg-ice-land font-semibold text-ink" : "text-ink hover:bg-ice-land"
+                  }`
+                }
+              >
+                {n.label}
+              </NavLink>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    </div>
+  );
+}
+
+/** Three bars that fold into an X while the menu is open. */
+function MenuIcon({ open }: { open: boolean }) {
+  const bar = "origin-center transition-transform duration-200 ease-[var(--ease-out)]";
+  return (
+    <svg viewBox="0 0 20 20" width="20" height="20" aria-hidden fill="none">
+      <path
+        d="M3 5.5h14"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        className={bar}
+        style={{ transform: open ? "translateY(4.5px) rotate(45deg)" : undefined }}
+      />
+      <path
+        d="M3 10h14"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        className="transition-opacity duration-150"
+        style={{ opacity: open ? 0 : 1 }}
+      />
+      <path
+        d="M3 14.5h14"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        className={bar}
+        style={{ transform: open ? "translateY(-4.5px) rotate(-45deg)" : undefined }}
+      />
+    </svg>
   );
 }
 

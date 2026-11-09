@@ -176,6 +176,17 @@ select {
   }
 }
 
+/* The phone menu drops in from under the header. */
+.menu-drop:not([hidden]) {
+  animation: menu-drop 180ms var(--ease-out) both;
+}
+@keyframes menu-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
 /* Full-page loading: hidden briefly so quick loads never flash, then a trace
    draws across like a seismograph pen. */
 .page-loading {
