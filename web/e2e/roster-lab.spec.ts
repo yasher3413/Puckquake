@@ -265,7 +265,7 @@ test("phone: one column and no sideways scroll", async ({ page }) => {
 test("the nav and the What-If Lab link here", async ({ page }) => {
   await mockRoster(page);
   await page.goto("/what-if");
-  await page.getByRole("link", { name: "Try a trade in the Roster Lab" }).click();
+  await page.getByRole("main").getByRole("link", { name: "Roster Lab" }).click();
   await expect(page).toHaveURL(/\/roster-lab/);
   await expect(
     page.getByRole("navigation").getByRole("link", { name: "Roster Lab" }),
