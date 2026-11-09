@@ -12,10 +12,10 @@
   },
   "redirects": [{ "source": "/teams", "destination": "/standings", "permanent": true }],
   "rewrites": [
-    { "source": "/robots.txt", "destination": "https://__API_HOST__/api/robots.txt" },
-    { "source": "/sitemap.xml", "destination": "https://__API_HOST__/api/sitemap.xml" },
-    { "source": "/api/:path*", "destination": "https://__API_HOST__/api/:path*" },
-    { "source": "/((?!assets/|_vercel/|app\\.html|favicon|sw\\.js|.*\\.[a-z0-9]+$).*)", "destination": "https://__API_HOST__/page/$1" }
+    { "source": "/robots.txt", "destination": "https://__API_HOST__/__ORIGIN_KEY__/api/robots.txt" },
+    { "source": "/sitemap.xml", "destination": "https://__API_HOST__/__ORIGIN_KEY__/api/sitemap.xml" },
+    { "source": "/api/:path*", "destination": "https://__API_HOST__/__ORIGIN_KEY__/api/:path*" },
+    { "source": "/((?!assets/|_vercel/|app\\.html|favicon|sw\\.js|.*\\.[a-z0-9]+$).*)", "destination": "https://__API_HOST__/__ORIGIN_KEY__/page/$1" }
   ],
   "headers": [
     {

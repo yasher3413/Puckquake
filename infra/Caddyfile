@@ -1,8 +1,15 @@
 # HTTPS for the Aftershock api on API_HOST (a certificate is issued
 # automatically). Until a domain is bought, an sslip.io name that encodes the
 # VM's public IP works, for example 129.146.10.20.sslip.io.
+#
+# Vercel forwards api and page requests under ORIGIN_KEY, a path only it and
+# this server know (vercel.json). The api trusts Vercel's visitor-address
+# header for its rate limits, so requests that skip Vercel must not reach it.
 {$API_HOST} {
 	encode gzip
+	handle_path /{$ORIGIN_KEY}/* {
+		reverse_proxy api:8000
+	}
 	@app path /api/* /ws/* /page/*
 	handle @app {
 		reverse_proxy api:8000

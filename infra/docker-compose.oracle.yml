@@ -68,6 +68,7 @@ services:
     image: caddy:2-alpine
     environment:
       API_HOST: ${API_HOST:?set API_HOST in .env, for example 129.146.10.20.sslip.io}
+      ORIGIN_KEY: ${ORIGIN_KEY:?set ORIGIN_KEY in .env (openssl rand -hex 16), the same as in vercel.json}
     ports:
       - "80:80"
       - "443:443"
