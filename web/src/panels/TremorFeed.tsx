@@ -15,19 +15,21 @@ export function TremorLine({
   myTeam: string | null;
   focus?: string;
 }) {
-  const movers = t.deltas.slice(0, 3);
+  // A late goal in a decided game can move nobody; list only real changes.
+  const movers = t.deltas.filter((d) => direction(d.d_playoffs) !== "flat").slice(0, 3);
   const mine = myTeam ? t.deltas.find((d) => d.team === myTeam) : undefined;
   const focused = focus ? t.deltas.find((d) => d.team === focus) : undefined;
   if (focused) {
     const v = focused.d_playoffs * 100;
+    const dir = direction(focused.d_playoffs);
     return (
       <Link to={`/tremor/${t.id}`} className="grid grid-cols-[4.2rem_1fr] gap-3 py-2">
         <div
-          className={`display text-right text-[30px] font-extrabold leading-none ${v > 0 ? "up" : "down"} ${t.overturned ? "line-through decoration-2" : ""}`}
+          className={`display text-right text-[30px] font-extrabold leading-none ${dir === "flat" ? "text-ink-soft" : dir} ${t.overturned ? "line-through decoration-2" : ""}`}
           aria-label={`${focus} ${pp(focused.d_playoffs)}`}
         >
-          {v > 0 ? "+" : "−"}
-          {Math.abs(v).toFixed(1)}
+          {dir === "up" ? "+" : dir === "down" ? "−" : ""}
+          {dir === "flat" ? "0.0" : Math.abs(v).toFixed(1)}
         </div>
         <div className="min-w-0 text-[13px]">
           <div className="truncate font-semibold">
@@ -82,6 +84,9 @@ export function TremorLine({
               {d.team} {arrow(d.d_playoffs)} {pp(d.d_playoffs)}
             </span>
           ))}
+          {movers.length === 0 && (
+            <span className="text-ink-soft">No team's odds moved by 0.1 pp</span>
+          )}
         </div>
         {mine &&
           myTeam &&
