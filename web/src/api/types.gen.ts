@@ -27,7 +27,7 @@ export interface Schema {
   roster_team: RosterTeamResponse;
   saved: ScenarioOut;
   state: StateResponse;
-  status: StatusResponse;
+  status: AdminStatusResponse;
   team: TeamResponse;
   tremor_page: TremorPage;
 }
@@ -683,10 +683,13 @@ export interface VenueInfo {
   name: string;
 }
 /**
+ * The admin page: pipeline status plus the goal bot.
+ *
  * This interface was referenced by `Schema`'s JSON-Schema
- * via the `definition` "StatusResponse".
+ * via the `definition` "AdminStatusResponse".
  */
-export interface StatusResponse {
+export interface AdminStatusResponse {
+  bot: BotInfo;
   health: HealthResponse;
   jobs: JobRunOut[];
   reconcile: {
@@ -695,6 +698,18 @@ export interface StatusResponse {
   sim_runs: {
     [k: string]: unknown;
   }[];
+}
+/**
+ * The goal bot on X: its mode and this month's spending, in tenths of a cent.
+ *
+ * This interface was referenced by `Schema`'s JSON-Schema
+ * via the `definition` "BotInfo".
+ */
+export interface BotInfo {
+  cap_millicents: number;
+  keys_present: boolean;
+  mode: "off" | "dry_run" | "live";
+  spent_millicents: number;
 }
 /**
  * This interface was referenced by `Schema`'s JSON-Schema

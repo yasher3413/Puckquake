@@ -21,7 +21,6 @@ const ABOUT = [
   { to: "/about", label: "About" },
   { to: "/about#nerds", label: "The math, briefly" },
   { to: "/?tour=1", label: "Take the tour" },
-  { to: "/status", label: "Pipeline status" },
 ];
 
 function Column({

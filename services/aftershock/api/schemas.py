@@ -427,6 +427,21 @@ class StatusResponse(Model):
     jobs: list[JobRunOut]
 
 
+class BotInfo(Model):
+    """The goal bot on X: its mode and this month's spending, in tenths of a cent."""
+
+    mode: Literal["off", "dry_run", "live"]
+    keys_present: bool
+    spent_millicents: int
+    cap_millicents: int
+
+
+class AdminStatusResponse(StatusResponse):
+    """The admin page: pipeline status plus the goal bot."""
+
+    bot: BotInfo
+
+
 class PushKeys(Model):
     p256dh: str
     auth: str
@@ -645,7 +660,7 @@ class Schema(BaseModel):
     nights: list[NightInfo]
     energy: list[EnergySeries]
     health: HealthResponse
-    status: StatusResponse
+    status: AdminStatusResponse
     recap: RecapResponse
     message: LiveMessage
     replay: ReplayBundleOut

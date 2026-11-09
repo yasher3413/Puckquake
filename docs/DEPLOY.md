@@ -82,7 +82,7 @@ scripts/deploy/push_data.sh ubuntu@<IP>
 ### 6. Check
 
 - `https://<IP>.sslip.io/api/health` answers.
-- The site loads, the map fills in, and `/status` shows the worker running.
+- The site loads, the map fills in, and `/admin` shows the worker running.
 - Paste a team or tremor link into an Open Graph preview checker and see the
   image card.
 
@@ -122,6 +122,17 @@ scripts/deploy/push_data.sh ubuntu@<IP>
   `scripts/set_api_host.sh <host>` (it fills `vercel.template.json`, which
   must stay in step with `vercel.json`), set `VITE_WS_URL` in Vercel, and
   update `API_HOST`.
+
+## Admin page
+
+`/admin` shows the pipeline status (worker heartbeat, recent simulations,
+standings reconciliation, jobs) and switches the goal bot. It is off until
+`ADMIN_PASSWORD` is set in the VM's `.env`; make it long and random
+(`openssl rand -base64 24`), then recreate the api:
+`sudo docker compose -f infra/docker-compose.oracle.yml --env-file .env up -d api`.
+Eight wrong passwords from one address (or sixty in total) lock sign-in for
+15 minutes. A session lasts a week; changing the password signs every
+session out.
 
 ## Goal bot on X
 

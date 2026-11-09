@@ -36,6 +36,8 @@ class Settings(BaseSettings):
     # The built web index.html (URL or file) that share previews are filled into.
     index_html: str = "http://web:8080/index.html"
     repo_url: str = "https://github.com/yasher3413/Aftershock"
+    # The /admin page's password; without one the page stays switched off.
+    admin_password: str = ""
     log_level: str = "INFO"
     # Web push (optional). Generate with `aftershock vapid-keys`.
     vapid_public_key: str = ""

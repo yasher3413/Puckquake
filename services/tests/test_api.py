@@ -222,8 +222,8 @@ async def test_health_status_methodology(client: Any) -> None:
     )
     h = (await c.get("/api/health")).json()
     assert h["ok"] and h["last_sim_ms"] == 12.5 and h["worker_lag_s"] < 60
-    st = (await c.get("/api/status")).json()
-    assert st["sim_runs"][0]["trigger"] == "goal"
+    # The pipeline status moved behind the admin password.
+    assert (await c.get("/api/status")).status_code == 404
     m = (await c.get("/api/methodology")).json()
     assert "xg" in m and "reliability" not in json.dumps(m["xg"]["test"]["lightgbm"])
     assert m["plots"]["xg_reliability"] == "/api/reports/xg_reliability.svg"
@@ -318,7 +318,7 @@ async def test_sitemap_lists_teams_nights_and_players(client: Any) -> None:
         "/player/2</loc>",
     ):
         assert path in body, path
-    assert "/status" not in body
+    assert "/admin" not in body
     robots = (await c.get("/api/robots.txt")).text
     assert "Sitemap: http" in robots and robots.rstrip().endswith("/sitemap.xml")
 
@@ -508,3 +508,54 @@ async def test_scenarios_get_short_links(client: Any, db_engine: AsyncEngine) ->
     for _ in range(40):
         last = await c.post("/api/scenarios", json={"encoded": "2026020007.ho"})
     assert last.status_code == 429
+
+
+async def test_admin_needs_the_password(client: Any) -> None:
+    from aftershock.api.admin import COOKIE
+
+    c, fake = client
+    settings = c._transport.app.state.aftershock.settings
+    settings.admin_password = ""
+    # Switched off until a password is set.
+    assert (await c.post("/api/admin/login", json={"password": ""})).status_code == 503
+    settings.admin_password = "correct horse"
+
+    assert (await c.get("/api/admin/status")).status_code == 401
+    forged = {"Cookie": f"{COOKIE}=99999999999.deadbeef"}
+    assert (await c.get("/api/admin/status", headers=forged)).status_code == 401
+    wrong = await c.post("/api/admin/login", json={"password": "nope"})
+    assert wrong.status_code == 401 and wrong.headers["cache-control"] == "no-store"
+
+    ok = await c.post("/api/admin/login", json={"password": "correct horse"})
+    assert ok.status_code == 204
+    cookie = ok.headers["set-cookie"]
+    assert "HttpOnly" in cookie and "SameSite=strict" in cookie and "Path=/api/admin" in cookie
+    token = ok.cookies[COOKIE]
+    c.cookies.clear()  # Each request below says whether it signs in.
+    auth = {"Cookie": f"{COOKIE}={token}"}
+    st = await c.get("/api/admin/status", headers=auth)
+    assert st.status_code == 200 and st.headers["cache-control"] == "no-store"
+    body = st.json()
+    assert body["sim_runs"][0]["trigger"] == "goal" and body["bot"]["mode"] == "off"
+
+    switched = await c.post("/api/admin/bot-mode", json={"mode": "dry_run"}, headers=auth)
+    assert switched.json()["mode"] == "dry_run"
+    assert await fake.get("aftershock:bot:mode") == "dry_run"
+    assert (await c.post("/api/admin/bot-mode", json={"mode": "dry_run"})).status_code == 401
+
+    # A new password signs every session out.
+    settings.admin_password = "another one"
+    assert (await c.get("/api/admin/status", headers=auth)).status_code == 401
+
+
+async def test_admin_locks_out_guessing(client: Any) -> None:
+    from aftershock.api.admin import LOGIN_LIMIT
+
+    c, _ = client
+    c._transport.app.state.aftershock.settings.admin_password = "correct horse"
+    for _ in range(LOGIN_LIMIT):
+        assert (await c.post("/api/admin/login", json={"password": "x"})).status_code == 401
+    # Locked: even the right password waits out the window.
+    assert (await c.post("/api/admin/login", json={"password": "x"})).status_code == 429
+    locked = await c.post("/api/admin/login", json={"password": "correct horse"})
+    assert locked.status_code == 429

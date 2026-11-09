@@ -56,7 +56,7 @@ STATIC = {
         "How it works",
         "The models and the simulator behind Puckquake, with measured results.",
     ),
-    "/status": ("Pipeline status", TAGLINE),
+    "/admin": ("Admin", TAGLINE),
     "/standings": (
         "Standings",
         "NHL standings by division, wild card, conference, and league, with every team's "
@@ -216,7 +216,7 @@ async def sitemap(session: AsyncSession, base_url: str) -> str:
     base = base_url.rstrip("/")
     season = await session.scalar(select(Tremor.season).order_by(desc(Tremor.season)).limit(1))
     teams = (await session.execute(select(Team.abbrev).order_by(Team.abbrev))).scalars()
-    paths = [p for p in SECTIONS if p != "/status"] + [f"/team/{t}" for t in teams]
+    paths = [p for p in SECTIONS if p != "/admin"] + [f"/team/{t}" for t in teams]
     if season is not None:
         nights = (
             await session.execute(
@@ -250,7 +250,7 @@ def robots(base_url: str) -> str:
     return (
         "User-agent: *\n"
         "Disallow: /embed/\n"
-        "Disallow: /status\n"
+        "Disallow: /admin\n"
         f"\nSitemap: {base_url.rstrip('/')}/sitemap.xml\n"
     )
 

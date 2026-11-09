@@ -1,5 +1,7 @@
 import { QueryClient, useQuery } from "@tanstack/react-query";
 import type {
+  AdminStatusResponse,
+  BotInfo,
   EnergySeries,
   GameResponse,
   LeadersResponse,
@@ -7,7 +9,6 @@ import type {
   PlayerResponse,
   RecapResponse,
   StateResponse,
-  StatusResponse,
   TeamResponse,
   Tremor,
   TremorPage,
@@ -119,9 +120,40 @@ export const useEnergy = () =>
     staleTime: 600_000,
   });
 
-export const useStatus = () =>
+/** The admin page's data; a 401 means the visitor has not signed in. */
+export const useAdminStatus = () =>
   useQuery({
-    queryKey: ["status"],
-    queryFn: () => api<StatusResponse>("/status"),
-    refetchInterval: 15_000,
+    queryKey: ["admin-status"],
+    queryFn: () => api<AdminStatusResponse>("/admin/status"),
+    refetchInterval: (q) => (q.state.data ? 15_000 : false),
+    retry: false,
   });
+
+const postJson = (path: string, body: unknown) =>
+  api<BotInfo>(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+export async function adminLogin(password: string): Promise<void> {
+  const res = await fetch("/api/admin/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password }),
+  });
+  if (!res.ok) {
+    let detail = "Could not sign in.";
+    try {
+      const body = (await res.json()) as { detail?: unknown };
+      if (typeof body.detail === "string") detail = body.detail;
+    } catch {
+      // Not JSON.
+    }
+    throw new ApiError(res.status, detail, detail);
+  }
+}
+
+export const adminLogout = () => fetch("/api/admin/logout", { method: "POST" });
+
+export const setBotMode = (mode: BotInfo["mode"]) => postJson("/admin/bot-mode", { mode });

@@ -24,10 +24,10 @@ from starlette.responses import Response
 POLICY: tuple[tuple[str, int | None], ...] = (
     ("/api/health", None),
     ("/api/push", None),
+    ("/api/admin", None),
     ("/api/docs", None),
     ("/api/openapi.json", None),
     ("/api/state", 5),
-    ("/api/status", 10),
     ("/api/methodology", 300),
     ("/api/reports", 300),
 )

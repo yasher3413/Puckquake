@@ -26,7 +26,7 @@ from aftershock.api.cache import ResponseCache
 from aftershock.api.hub import Hub
 from aftershock.api.replay import compacted_bytes
 from aftershock.config import Settings, get_settings
-from aftershock.db.models import JobRun, ReconcileEvent, ReplayBundle, SimRun, Tremor
+from aftershock.db.models import ReplayBundle, SimRun, Tremor
 from aftershock.db.session import session_factory
 from aftershock.live.publish import CHANNEL, Publisher
 
@@ -106,7 +106,7 @@ async def db() -> AsyncIterator[AsyncSession]:
 
 
 Db = Annotated[AsyncSession, Depends(db)]
-router = APIRouter()
+router: APIRouter = APIRouter()
 pages_router = APIRouter()
 
 
@@ -555,34 +555,6 @@ async def recap(night: date, session: Db) -> S.RecapResponse:
     return r
 
 
-@router.get("/status", response_model=S.StatusResponse)
-async def status(st: State, session: Db) -> S.StatusResponse:
-    h = await health(st, session)
-    runs = (await session.execute(select(SimRun).order_by(desc(SimRun.id)).limit(25))).scalars()
-    rec = (
-        await session.execute(select(ReconcileEvent).order_by(desc(ReconcileEvent.id)).limit(25))
-    ).scalars()
-    jobs = (await session.execute(select(JobRun).order_by(desc(JobRun.id)).limit(25))).scalars()
-    return S.StatusResponse(
-        health=h,
-        sim_runs=[
-            {
-                "id": r.id,
-                "created_at": r.created_at.isoformat(),
-                "trigger": r.trigger,
-                "n_sims": r.n_sims,
-                "duration_ms": r.duration_ms,
-            }
-            for r in runs
-        ],
-        reconcile=[
-            {"id": r.id, "created_at": r.created_at.isoformat(), "kind": r.kind, "detail": r.detail}
-            for r in rec
-        ],
-        jobs=[S.JobRunOut.model_validate(j) for j in jobs],
-    )
-
-
 # ----------------------------------------------------------------------
 # Web push
 
@@ -950,3 +922,9 @@ async def og_roster(moves_id: str, session: Db, st: State, request: Request) -> 
 def read_gz_json(path: Path) -> Any:
     with gzip.open(path, "rt", encoding="utf-8") as fh:
         return json.load(fh)
+
+
+# The admin page's routes use db and health above, so they join last.
+from aftershock.api.admin import router as admin_router  # noqa: E402
+
+router.include_router(admin_router)

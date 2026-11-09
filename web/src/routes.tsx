@@ -17,7 +17,7 @@ const WhatIf = lazy(() => import("./pages/WhatIf"));
 const RosterLab = lazy(() => import("./pages/RosterLab"));
 const Method = lazy(() => import("./pages/Method"));
 const About = lazy(() => import("./pages/About"));
-const Status = lazy(() => import("./pages/Status"));
+const Admin = lazy(() => import("./pages/Admin"));
 const Embed = lazy(() => import("./pages/Embed"));
 
 function page(node: ReactNode) {
@@ -45,7 +45,9 @@ export const router = createBrowserRouter([
       { path: "/roster-lab", element: page(<RosterLab />) },
       { path: "/method", element: page(<Method />) },
       { path: "/about", element: page(<About />) },
-      { path: "/status", element: page(<Status />) },
+      { path: "/admin", element: page(<Admin />) },
+      // The pipeline status moved behind the admin password on 2026-11-09.
+      { path: "/status", element: <Navigate to="/admin" replace /> },
       { path: "*", element: <RouteError notFound /> },
     ],
   },

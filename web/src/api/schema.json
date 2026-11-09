@@ -1,5 +1,82 @@
 {
   "$defs": {
+    "AdminStatusResponse": {
+      "description": "The admin page: pipeline status plus the goal bot.",
+      "properties": {
+        "bot": {
+          "$ref": "#/$defs/BotInfo"
+        },
+        "health": {
+          "$ref": "#/$defs/HealthResponse"
+        },
+        "jobs": {
+          "items": {
+            "$ref": "#/$defs/JobRunOut"
+          },
+          "title": "Jobs",
+          "type": "array"
+        },
+        "reconcile": {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "Reconcile",
+          "type": "array"
+        },
+        "sim_runs": {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "Sim Runs",
+          "type": "array"
+        }
+      },
+      "required": [
+        "health",
+        "sim_runs",
+        "reconcile",
+        "jobs",
+        "bot"
+      ],
+      "title": "AdminStatusResponse",
+      "type": "object"
+    },
+    "BotInfo": {
+      "description": "The goal bot on X: its mode and this month's spending, in tenths of a cent.",
+      "properties": {
+        "cap_millicents": {
+          "title": "Cap Millicents",
+          "type": "integer"
+        },
+        "keys_present": {
+          "title": "Keys Present",
+          "type": "boolean"
+        },
+        "mode": {
+          "enum": [
+            "off",
+            "dry_run",
+            "live"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "spent_millicents": {
+          "title": "Spent Millicents",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "mode",
+        "keys_present",
+        "spent_millicents",
+        "cap_millicents"
+      ],
+      "title": "BotInfo",
+      "type": "object"
+    },
     "ClinchOut": {
       "properties": {
         "magic_number": {
@@ -2424,44 +2501,6 @@
       "title": "StateResponse",
       "type": "object"
     },
-    "StatusResponse": {
-      "properties": {
-        "health": {
-          "$ref": "#/$defs/HealthResponse"
-        },
-        "jobs": {
-          "items": {
-            "$ref": "#/$defs/JobRunOut"
-          },
-          "title": "Jobs",
-          "type": "array"
-        },
-        "reconcile": {
-          "items": {
-            "additionalProperties": true,
-            "type": "object"
-          },
-          "title": "Reconcile",
-          "type": "array"
-        },
-        "sim_runs": {
-          "items": {
-            "additionalProperties": true,
-            "type": "object"
-          },
-          "title": "Sim Runs",
-          "type": "array"
-        }
-      },
-      "required": [
-        "health",
-        "sim_runs",
-        "reconcile",
-        "jobs"
-      ],
-      "title": "StatusResponse",
-      "type": "object"
-    },
     "TeamDelta": {
       "properties": {
         "d_cup": {
@@ -3282,7 +3321,7 @@
       "$ref": "#/$defs/StateResponse"
     },
     "status": {
-      "$ref": "#/$defs/StatusResponse"
+      "$ref": "#/$defs/AdminStatusResponse"
     },
     "team": {
       "$ref": "#/$defs/TeamResponse"

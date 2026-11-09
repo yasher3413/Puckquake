@@ -27,6 +27,7 @@ def test_cache_policy_by_path() -> None:
     assert fresh_for("/api/teams/TOR") == 30
     assert fresh_for("/api/methodology") == 300
     assert fresh_for("/api/health") is None
+    assert fresh_for("/api/admin/status") is None
     assert fresh_for("/api/push/subscribe") is None
     assert fresh_for("/page/team/tor") is None
 

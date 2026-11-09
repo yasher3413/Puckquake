@@ -25,7 +25,7 @@ the generated file is stale.
 | `GET /methodology` | Model reports from `ml/reports/*.json` and plot URLs |
 | `GET /reports/{name}` | A report plot (SVG) |
 | `GET /recaps/{date}` | Nightly recap |
-| `GET /status` | Health, recent simulations, reconciliation events, job runs |
+| `POST /admin/login`, `GET /admin/status`, `POST /admin/bot-mode` | The owner's admin page (signed-in cookie): health, recent simulations, reconciliation events, job runs, goal bot |
 | `GET /og/tremor/{id}.png?size=og|card` | Share image: 1200 by 630, or the 1080 by 1350 card |
 | `GET /og/team/{abbrev}.png`, `GET /og/night/{date}.png` | Share images, 1200 by 630 |
 | `POST /scenarios` | Save What-If picks (`{"encoded": "2026020170.hr_..."}`, the Lab's `s` format, up to 1,400 picks of scheduled games) for a short link; returns `{"id", "encoded"}` with an 8-character id, the same id for the same picks. Limited to 30 saves per visitor per 10 minutes (`429`) |
