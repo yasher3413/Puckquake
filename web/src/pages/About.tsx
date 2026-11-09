@@ -1,7 +1,7 @@
 import { useEffect, type ReactNode } from "react";
 import { Link, useLocation } from "react-router";
 import { useDocumentMeta } from "../lib/meta";
-import { ELSEWHERE, EMAIL, REPO } from "../lib/contact";
+import { ELSEWHERE, EMAIL } from "../lib/contact";
 
 function H({ id, children }: { id: string; children: ReactNode }) {
   return (
@@ -69,11 +69,7 @@ export default function AboutPage() {
 
         <H id="feedback">Feedback and bugs</H>
         <p>
-          Something look wrong, or have an idea? Open an issue on{" "}
-          <a href={`${REPO}/issues`} className="font-semibold text-blue-line underline">
-            GitHub
-          </a>{" "}
-          or email{" "}
+          Something look wrong, or have an idea? Email{" "}
           <a href={`mailto:${EMAIL}`} className="font-semibold text-blue-line underline">
             {EMAIL}
           </a>
@@ -122,10 +118,6 @@ export default function AboutPage() {
           <Link to="/method" className="font-semibold text-blue-line underline">
             How it works
           </Link>
-          . The code is open on{" "}
-          <a href={REPO} className="font-semibold text-blue-line underline">
-            GitHub
-          </a>
           .
         </p>
 

@@ -35,7 +35,8 @@ class Settings(BaseSettings):
     public_base_url: str = "http://localhost:8080"
     # The built web index.html (URL or file) that share previews are filled into.
     index_html: str = "http://web:8080/index.html"
-    repo_url: str = "https://github.com/yasher3413/Aftershock"
+    # Named in the NHL client's user agent so the league can reach the site.
+    contact_url: str = "https://www.puckquake.com/about"
     # The /admin page's password; without one the page stays switched off.
     admin_password: str = ""
     log_level: str = "INFO"

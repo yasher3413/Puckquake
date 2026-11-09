@@ -1,5 +1,4 @@
 /** Where to reach the maker, shared by the About page and the footer. */
-export const REPO = "https://github.com/yasher3413/Aftershock";
 export const EMAIL = "yashgandhi2023@gmail.com";
 
 export const ELSEWHERE = [

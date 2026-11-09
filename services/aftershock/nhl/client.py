@@ -98,7 +98,7 @@ class NhlClient:
             follow_redirects=True,
             transport=transport,
             headers={
-                "User-Agent": f"aftershock/{__version__} (+{self.settings.repo_url})",
+                "User-Agent": f"aftershock/{__version__} (+{self.settings.contact_url})",
                 "Accept": "application/json",
             },
         )

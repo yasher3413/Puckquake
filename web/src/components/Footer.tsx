@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router";
-import { ELSEWHERE, REPO } from "../lib/contact";
+import { ELSEWHERE, EMAIL } from "../lib/contact";
 import { DIVISIONS } from "../lib/teams";
 import { TeamLogo } from "./TeamLogo";
 
@@ -85,8 +85,8 @@ export function Footer() {
                 Yash Gandhi
               </Link>
               . Found a bug?{" "}
-              <a href={`${REPO}/issues`} className="font-semibold text-blue-line hover:underline">
-                Tell me on GitHub
+              <a href={`mailto:${EMAIL}`} className="font-semibold text-blue-line hover:underline">
+                Email me
               </a>
               .
             </p>
