@@ -109,6 +109,9 @@ scripts/deploy/push_data.sh ubuntu@<IP>
   page shell cached before the deploy still loads; nothing to do by hand. On
   the VM, for api or worker changes:
   `cd ~/Aftershock && git pull && sudo docker compose -f infra/docker-compose.oracle.yml --env-file .env up -d --build`.
+  After a change to `infra/Caddyfile`, add `--force-recreate caddy`: the file
+  is mounted on its own, and `git pull` replaces it with a new file that a
+  running Caddy (even after `caddy reload`) never sees.
 - **Model changes:** after a change to the strength model or its inputs
   (including `config/market/point_totals.json`), recompute ratings and restart
   the worker so the live odds and the What-If Lab use it:
