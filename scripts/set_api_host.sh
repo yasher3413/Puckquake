@@ -7,7 +7,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 host="${1:?usage: scripts/set_api_host.sh API_HOST ORIGIN_KEY}"
-key="${2:?usage: scripts/set_api_host.sh API_HOST ORIGIN_KEY (ORIGIN_KEY from the VM's .env)}"
+key="${2:?usage: scripts/set_api_host.sh API_HOST ORIGIN_KEY (ORIGIN_KEY is in the .env on the VM)}"
 sed -e "s/__API_HOST__/${host}/g" -e "s/__ORIGIN_KEY__/${key}/g" vercel.template.json > vercel.json
 echo "wrote vercel.json for ${host}"
 echo "In Vercel, set VITE_WS_URL=wss://${host}/ws/live for the build."

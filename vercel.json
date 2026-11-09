@@ -12,10 +12,10 @@
   },
   "redirects": [{ "source": "/teams", "destination": "/standings", "permanent": true }],
   "rewrites": [
-    { "source": "/robots.txt", "destination": "https://api.puckquake.com/api/robots.txt" },
-    { "source": "/sitemap.xml", "destination": "https://api.puckquake.com/api/sitemap.xml" },
-    { "source": "/api/:path*", "destination": "https://api.puckquake.com/api/:path*" },
-    { "source": "/((?!assets/|_vercel/|app\\.html|favicon|sw\\.js|.*\\.[a-z0-9]+$).*)", "destination": "https://api.puckquake.com/page/$1" }
+    { "source": "/robots.txt", "destination": "https://api.puckquake.com/4f73bdf9d69df0aba03c5b8097fee796/api/robots.txt" },
+    { "source": "/sitemap.xml", "destination": "https://api.puckquake.com/4f73bdf9d69df0aba03c5b8097fee796/api/sitemap.xml" },
+    { "source": "/api/:path*", "destination": "https://api.puckquake.com/4f73bdf9d69df0aba03c5b8097fee796/api/:path*" },
+    { "source": "/((?!assets/|_vercel/|app\\.html|favicon|sw\\.js|.*\\.[a-z0-9]+$).*)", "destination": "https://api.puckquake.com/4f73bdf9d69df0aba03c5b8097fee796/page/$1" }
   ],
   "headers": [
     {

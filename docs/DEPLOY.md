@@ -36,12 +36,18 @@ WebSocket per visitor. Free serverless and sleeping instances stop both.
 
 ### 2. Point the website at the VM
 
-On your laptop, in the repo:
+After step 4, which creates the VM's `ORIGIN_KEY`, on your laptop, in the repo:
 
 ```sh
-scripts/set_api_host.sh <IP>.sslip.io     # writes vercel.json
+scripts/set_api_host.sh <IP>.sslip.io <ORIGIN_KEY>     # writes vercel.json
 git add vercel.json && git commit -m "Point the website at the api host" && git push
 ```
+
+Vercel forwards `/api` and page requests to the VM under that key, and Caddy
+answers only those (plus the live WebSocket and `/api/health`). The api
+reads the visitor's address from Vercel's header for its rate limits, so
+requests that skip Vercel are refused. The key is why `vercel.json` must
+stay private.
 
 ### 3. Vercel
 
@@ -56,13 +62,20 @@ git add vercel.json && git commit -m "Point the website at the api host" && git 
 
 ### 4. Start the engine on the VM
 
+The repository is private, so the VM needs a read-only deploy key first:
+
 ```sh
-ssh ubuntu@<IP>
-curl -fsSL https://raw.githubusercontent.com/yasher3413/Aftershock/main/scripts/deploy/oracle_bootstrap.sh | bash -s -- https://aftershock.vercel.app
+ssh ubuntu@<IP> 'ssh-keygen -q -t ed25519 -N "" -f ~/.ssh/aftershock_deploy &&
+  printf "Host github.com\n  IdentityFile ~/.ssh/aftershock_deploy\n" >> ~/.ssh/config &&
+  ssh-keyscan github.com >> ~/.ssh/known_hosts && cat ~/.ssh/aftershock_deploy.pub' > vm.pub
+gh repo deploy-key add vm.pub --title "Oracle VM (read only)" && rm vm.pub
+scp scripts/deploy/oracle_bootstrap.sh ubuntu@<IP>:
+ssh ubuntu@<IP> bash oracle_bootstrap.sh https://aftershock.vercel.app
 ```
 
 It installs Docker, opens the VM's firewall, writes `.env` (random database
-password, the api host, the site address), and builds and starts Postgres,
+password, origin key, and admin password, the api host, the site address),
+and builds and starts Postgres,
 Redis, the api, the worker, and Caddy. Add `OPENAI_API_KEY` to `~/Aftershock/.env`
 for model-written recaps, then
 `sudo docker compose -f infra/docker-compose.oracle.yml --env-file .env up -d`.
@@ -119,7 +132,7 @@ scripts/deploy/push_data.sh ubuntu@<IP>
   `/api`, page paths, robots, and the sitemap to api.puckquake.com. After
   changing `.env`, recreate the containers with `up -d` (`restart` keeps the
   old values). To change the api host again, run
-  `scripts/set_api_host.sh <host>` (it fills `vercel.template.json`, which
+  `scripts/set_api_host.sh <host> <ORIGIN_KEY>` (it fills `vercel.template.json`, which
   must stay in step with `vercel.json`), set `VITE_WS_URL` in Vercel, and
   update `API_HOST`.
 
