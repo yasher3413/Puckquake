@@ -120,7 +120,7 @@ export default function TremorPage() {
           <p className="mt-1 text-[15px]">
             {t.shootout
               ? "Shootout winner"
-              : `${periodLabel(t.period, t.period_type)} period, ${clock(t.t_period_s)}`}
+              : `${periodLabel(t.period, t.period_type).replace(/^(1st|2nd|3rd)$/, "$1 period")}, ${clock(t.t_period_s)}`}
             . {t.away} {t.score_before.away}-{t.score_before.home} {t.home} became {t.away}{" "}
             {t.score_after.away}-{t.score_after.home} {t.home}.
           </p>
