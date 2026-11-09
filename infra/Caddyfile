@@ -10,11 +10,13 @@
 	handle_path /{$ORIGIN_KEY}/* {
 		reverse_proxy api:8000
 	}
-	@app path /api/* /ws/* /page/*
-	handle @app {
+	# Browsers open the live map's WebSocket here directly (Vercel does not
+	# forward WebSockets), and uptime checks read the health document.
+	@open path /ws/* /api/health
+	handle @open {
 		reverse_proxy api:8000
 	}
 	handle {
-		respond "Aftershock api" 200
+		respond "Not found" 404
 	}
 }
