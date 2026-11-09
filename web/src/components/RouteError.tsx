@@ -1,8 +1,10 @@
 import { Link, isRouteErrorResponse, useRouteError } from "react-router";
+import { useDocumentMeta } from "../lib/meta";
 
 export function RouteError({ notFound = false }: { notFound?: boolean }) {
   const error = useRouteError();
   const missing = notFound || (isRouteErrorResponse(error) && error.status === 404);
+  useDocumentMeta(missing ? "Page not found" : "Something went wrong");
   return (
     <div className="mx-auto max-w-xl px-4 py-16">
       <h1 className="display text-[38px] font-bold">
