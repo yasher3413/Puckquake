@@ -170,8 +170,21 @@ select {
   }
 }
 
+/* Each step's text settles in as the spotlight moves. */
+.tour-step {
+  animation: tour-step 200ms var(--ease-out) both;
+}
+
+@keyframes tour-step {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .tour-ring {
+  .tour-ring,
+  .tour-step {
     animation: none;
   }
 }

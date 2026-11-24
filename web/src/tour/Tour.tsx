@@ -28,12 +28,68 @@ const PAD = 6;
 const GAP = 14;
 const CARD_W = 360;
 
-function useSteps(): Step[] {
+function useSteps(phone: boolean): Step[] {
   const mode = useLive((s) => s.mode);
   const replay = useLive((s) => s.replay);
   const tonight = useLive((s) => s.tonight);
   const replaying = mode === "demo" && !!replay;
   const night = replay ? monthDay(replay.night_date) : "";
+  // Phones get four short steps in page order, so the tour only scrolls
+  // down the page and then back to the top once.
+  if (phone)
+    return [
+      {
+        target: "map",
+        title: "Each ring is a team's playoff odds",
+        body: (
+          <>
+            <p className="text-ink-soft">
+              {replaying
+                ? `No games on yet, so this is ${night} replayed.`
+                : `${tonight.length} ${tonight.length === 1 ? "game" : "games"} tonight, live.`}
+            </p>
+            <div className="mt-2 flex items-start gap-3">
+              <RingSample />
+              <p>
+                The fuller the ring, the better the odds. A goal sends out a shockwave and every
+                ring it hits moves: <span className="up font-semibold">blue</span> went up,{" "}
+                <span className="down font-semibold">red</span> went down.
+              </p>
+            </div>
+          </>
+        ),
+      },
+      {
+        target: "timeline",
+        title: "The goal timeline",
+        body: (
+          <p>
+            Each red mark is a goal; tap one to open it.
+            {replaying ? " Drag to rewind or change the speed." : ""}
+          </p>
+        ),
+      },
+      {
+        target: "games",
+        title: replaying ? "That night's games" : "Tonight's games",
+        body: (
+          <p>
+            The bar is each team's chance to win the game. The small bars on the right show how much
+            it could move the playoff race.
+          </p>
+        ),
+      },
+      {
+        target: "myteam",
+        title: "Make it yours",
+        body: (
+          <p>
+            Pick your team to keep its odds up top and see what every goal did to it. The other
+            pages are in the menu.
+          </p>
+        ),
+      },
+    ];
   return [
     {
       title: "Every goal moves the playoff race",
@@ -172,7 +228,7 @@ function present(target: string): boolean {
   return r.width >= 4 && r.height >= 4;
 }
 
-function measure(target: string | undefined): Box | null {
+function measure(target: string | undefined, floor: number): Box | null {
   if (!target) return null;
   const el = document.querySelector<HTMLElement>(`[data-tour="${target}"]`);
   if (!el) return null;
@@ -191,7 +247,7 @@ function measure(target: string | undefined): Box | null {
   }
   top = Math.max(top, 0);
   left = Math.max(left, 0);
-  bottom = Math.min(bottom, window.innerHeight);
+  bottom = Math.min(bottom, floor);
   right = Math.min(right, window.innerWidth);
   if (right - left < 4 || bottom - top < 4) return null;
   return {
@@ -229,8 +285,8 @@ export function Tour() {
   const step = useTour((s) => s.step);
   const go = useTour((s) => s.go);
   const close = useTour((s) => s.close);
-  const steps = useSteps();
   const phone = !useMedia("(min-width: 640px)");
+  const steps = useSteps(phone);
   const reduce = useReducedMotion();
   const [box, setBox] = useState<Box | null>(null);
   const [card, setCard] = useState({ w: CARD_W, h: 220 });
@@ -239,39 +295,55 @@ export function Tour() {
   // same direction (Back over it, not forward again).
   const prevStep = useRef(0);
   const titleRef = useRef<HTMLHeadingElement>(null);
+  const swipe = useRef<{ x: number; y: number } | null>(null);
   const current = steps[step];
+  // The steps are rebuilt on every render (the live store ticks during a
+  // replay); key the scroll on the target so a tick never scrolls the page.
+  const target = current?.target;
+  const last = step === steps.length - 1;
+  const next = () => (last ? close() : go(step + 1));
+  const back = () => step > 0 && go(step - 1);
 
   // Leaving the page ends the tour; it counts as seen.
   useEffect(() => () => void (useTour.getState().open && useTour.getState().close()), []);
 
+  // A phone that turns sideways can leave the step past the end.
+  useEffect(() => {
+    if (open && step >= steps.length) go(steps.length - 1);
+  }, [open, step, steps.length, go]);
+
   // Bring the target into view, then follow it while the page scrolls or
   // resizes. A step whose target is missing (a hidden panel) is skipped.
   useLayoutEffect(() => {
-    if (!open || !current) return;
+    if (!open || step >= steps.length) return;
     const dir = step >= prevStep.current ? 1 : -1;
     prevStep.current = step;
-    if (current.target && !present(current.target)) {
-      const next = step + dir;
-      if (next >= 0 && next < steps.length) go(next);
+    if (target && !present(target)) {
+      const to = step + dir;
+      if (to >= 0 && to < steps.length) go(to);
       else close();
       return;
     }
-    const el = current.target
-      ? document.querySelector<HTMLElement>(`[data-tour="${current.target}"]`)
-      : null;
+    const el = target ? document.querySelector<HTMLElement>(`[data-tour="${target}"]`) : null;
     if (el) {
-      const behavior = reduce ? "auto" : "smooth";
       if (phone) {
-        // The card is docked at the bottom; put the target near the top.
-        const top = el.getBoundingClientRect().top + window.scrollY - 12;
-        window.scrollTo({ top: Math.max(0, top), behavior });
+        // The card is docked at the bottom; put the target near the top, or
+        // the page's top when the target is close to it, so the header and
+        // its menu stay in view. A jump, not a long smooth scroll.
+        const top = el.getBoundingClientRect().top + window.scrollY;
+        window.scrollTo({ top: top < window.innerHeight * 0.4 ? 0 : top - 12, behavior: "auto" });
       } else {
-        el.scrollIntoView({ block: "nearest", behavior });
+        el.scrollIntoView({ block: "nearest", behavior: reduce ? "auto" : "smooth" });
       }
     }
+    // Measure only when something moved, not every frame: the map animates
+    // underneath, and layout reads each frame make the whole page drag.
     let frame = 0;
-    const follow = () => {
-      const b = measure(current.target);
+    const update = () => {
+      frame = 0;
+      const dock = cardRef.current;
+      const floor = phone && dock ? dock.getBoundingClientRect().top - 8 : window.innerHeight;
+      const b = measure(target, floor);
       setBox((prev) =>
         prev &&
         b &&
@@ -283,12 +355,25 @@ export function Tour() {
           ? prev
           : b,
       );
-      frame = requestAnimationFrame(follow);
     };
-    follow();
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", schedule, { capture: true, passive: true });
+    window.addEventListener("resize", schedule);
+    const ro = new ResizeObserver(schedule);
+    ro.observe(document.body);
+    if (el) ro.observe(el);
+    if (cardRef.current) ro.observe(cardRef.current);
     titleRef.current?.focus({ preventScroll: true });
-    return () => cancelAnimationFrame(frame);
-  }, [open, step, current, steps.length, go, close, phone, reduce]);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", schedule, { capture: true });
+      window.removeEventListener("resize", schedule);
+      ro.disconnect();
+    };
+  }, [open, step, target, steps.length, go, close, phone, reduce]);
 
   useLayoutEffect(() => {
     const el = cardRef.current;
@@ -316,11 +401,11 @@ export function Tour() {
   }, [open, step, steps.length, go, close]);
 
   if (!open || !current) return null;
-  const last = step === steps.length - 1;
   const pos = phone ? null : place(box, card);
+  const ms = phone ? 200 : 320;
   const ease = reduce
     ? "none"
-    : "top 320ms var(--ease-out), left 320ms var(--ease-out), width 320ms var(--ease-out), height 320ms var(--ease-out)";
+    : ["top", "left", "width", "height"].map((p) => `${p} ${ms}ms var(--ease-out)`).join(", ");
   const spot = box ?? {
     top: window.innerHeight / 2,
     left: window.innerWidth / 2,
@@ -350,8 +435,25 @@ export function Tour() {
         role="dialog"
         aria-modal="false"
         aria-labelledby="tour-title"
-        className={`pointer-events-auto absolute flex flex-col rounded-[var(--radius)] border border-ice-scratch bg-surface p-5 text-[14px] leading-[1.5] text-ink shadow-[0_18px_48px_rgba(6,13,19,0.28)] ${
-          phone ? "inset-x-3 bottom-3 pb-[max(1.25rem,env(safe-area-inset-bottom))]" : ""
+        // Phones: swipe the card left for the next step, right to go back.
+        onTouchStart={(e) => {
+          const t = e.touches[0];
+          swipe.current = t ? { x: t.clientX, y: t.clientY } : null;
+        }}
+        onTouchEnd={(e) => {
+          const s = swipe.current;
+          const t = e.changedTouches[0];
+          swipe.current = null;
+          if (!s || !t) return;
+          const dx = t.clientX - s.x;
+          if (Math.abs(dx) < 48 || Math.abs(t.clientY - s.y) > Math.abs(dx) / 2) return;
+          if (dx < 0) next();
+          else back();
+        }}
+        className={`pointer-events-auto absolute flex flex-col rounded-[var(--radius)] border border-ice-scratch bg-surface text-ink shadow-[0_18px_48px_rgba(6,13,19,0.28)] ${
+          phone
+            ? "inset-x-2 bottom-2 p-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] text-[14px] leading-[1.45]"
+            : "p-5 text-[14px] leading-[1.5]"
         }`}
         style={
           pos
@@ -366,36 +468,57 @@ export function Tour() {
             : undefined
         }
       >
-        <div className="flex items-baseline justify-between gap-3">
+        <div className="flex items-start justify-between gap-3">
           <h2
             id="tour-title"
             ref={titleRef}
             tabIndex={-1}
-            className="display text-[24px] font-bold leading-none [text-wrap:balance] focus:outline-none focus-visible:outline-none"
+            className={`display font-bold leading-none [text-wrap:balance] focus:outline-none focus-visible:outline-none ${
+              phone ? "pt-1 text-[21px]" : "text-[24px]"
+            }`}
             style={{ outline: "none" }}
           >
             {current.title}
           </h2>
-          <span className="shrink-0 text-[12px] text-ink-soft tabular-nums">
-            {step + 1} of {steps.length}
-          </span>
+          {phone ? (
+            <button
+              type="button"
+              onClick={close}
+              aria-label="Skip tour"
+              className="-mr-2 -mt-2 grid size-11 shrink-0 place-items-center rounded-[var(--radius)] text-ink-soft hover:text-ink"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden>
+                <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="1.75" />
+              </svg>
+            </button>
+          ) : (
+            <span className="shrink-0 text-[12px] text-ink-soft tabular-nums">
+              {step + 1} of {steps.length}
+            </span>
+          )}
         </div>
-        <div className="mt-3" aria-live="polite">
+        <div key={step} className={`tour-step ${phone ? "mt-2" : "mt-3"}`} aria-live="polite">
           {current.body}
         </div>
-        <div className="mt-5 flex items-center gap-2">
-          <button
-            type="button"
-            onClick={close}
-            className="min-h-[44px] px-1 text-[13px] font-semibold text-ink-soft hover:text-ink"
-          >
-            {step === 0 ? "Skip" : "Skip tour"}
-          </button>
+        <div className={`flex items-center gap-2 ${phone ? "mt-3" : "mt-5"}`}>
+          {phone ? (
+            <span className="text-[12px] text-ink-soft tabular-nums">
+              {step + 1} of {steps.length}
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={close}
+              className="min-h-[44px] px-1 text-[13px] font-semibold text-ink-soft hover:text-ink"
+            >
+              {step === 0 ? "Skip" : "Skip tour"}
+            </button>
+          )}
           <div className="ml-auto flex gap-2">
             {step > 0 && (
               <button
                 type="button"
-                onClick={() => go(step - 1)}
+                onClick={back}
                 className="min-h-[44px] rounded-[var(--radius)] border border-ice-scratch px-4 text-[13px] font-semibold hover:bg-ice-land"
               >
                 Back
@@ -403,10 +526,18 @@ export function Tour() {
             )}
             <button
               type="button"
-              onClick={() => (last ? close() : go(step + 1))}
+              onClick={next}
               className="min-h-[44px] rounded-[var(--radius)] bg-ink px-4 text-[13px] font-semibold text-ice"
             >
-              {step === 0 ? "Show me around" : last ? "Start watching" : "Next"}
+              {phone
+                ? last
+                  ? "Done"
+                  : "Next"
+                : step === 0
+                  ? "Show me around"
+                  : last
+                    ? "Start watching"
+                    : "Next"}
             </button>
           </div>
         </div>

@@ -51,3 +51,32 @@ test("a returning visitor can replay the tour", async ({ page }) => {
   await page.getByRole("button", { name: "Skip", exact: true }).click();
   await expect(page.getByRole("dialog")).toBeHidden();
 });
+
+test.describe("first visit on a phone", () => {
+  test.use({ freshVisitor: true, viewport: { width: 390, height: 664 } });
+
+  test("the walkthrough is four short steps down the page", async ({ page }) => {
+    await page.goto("/");
+    const tour = page.getByRole("dialog");
+    await expect(tour).toContainText("Each ring is a team's playoff odds", { timeout: 15_000 });
+    await expect(tour).toContainText("1 of 4");
+    const titles = [];
+    for (let i = 0; i < 3; i++) {
+      await tour.getByRole("button", { name: "Next" }).click();
+      titles.push(await tour.getByRole("heading").textContent());
+    }
+    expect(titles).toEqual(["The goal timeline", "That night's games", "Make it yours"]);
+    // The last step is at the top, with the menu in view.
+    await expect(page.getByRole("button", { name: "Menu" })).toBeInViewport();
+    await tour.getByRole("button", { name: "Done" }).click();
+    await expect(tour).toBeHidden();
+  });
+
+  test("the close button skips the tour", async ({ page }) => {
+    await page.goto("/");
+    const tour = page.getByRole("dialog");
+    await expect(tour).toBeVisible({ timeout: 15_000 });
+    await tour.getByRole("button", { name: "Skip tour" }).click();
+    await expect(tour).toBeHidden();
+  });
+});

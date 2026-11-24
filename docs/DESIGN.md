@@ -200,8 +200,13 @@ welcome (live or replay, in plain words), the rings, the shockwave (blue,
 red, pp, M), the timeline, the games and stakes, my team, and the other
 pages. A spotlight cut from a dim layer outlines the target in blue (the
 focus color); clicks pass through, so the page stays usable. On desktop
-the card sits beside the target; on phones it docks at the bottom and the
-target scrolls to the top. It opens once for a first visitor after the
+the card sits beside the target. Phones get four shorter steps in page
+order (rings and shockwave together, the timeline, the games, my team,
+which mentions the menu), so the page only jumps down and then back to
+the top once; the card docks at the bottom, the spotlight stops above it,
+the close button replaces "Skip", and a swipe on the card moves between
+steps. The spotlight is re-measured only on scroll and resize, never
+every frame, since the map animates underneath. It opens once for a first visitor after the
 map loads, is skippable from every step and with Esc, moves with the arrow
 keys, and replays from "How to read this" on Home or "Take the tour" in
 the footer (`/?tour=1`). Seen state is `aftershock.tourSeen` in local
