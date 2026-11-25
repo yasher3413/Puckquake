@@ -1,6 +1,6 @@
 import { Link } from "react-router";
 import type { Tremor } from "../api/types.gen";
-import { arrow, clock, direction, periodLabel, pp } from "../lib/format";
+import { arrow, clock, direction, magnitude, pct, periodLabel, pp } from "../lib/format";
 import { useLive } from "../live/store";
 import { useMyTeam } from "../lib/myTeam";
 
@@ -39,7 +39,7 @@ export function TremorLine({
           <div className="text-[12px] text-ink-soft">
             {t.away} {t.score_after.away}, {t.home} {t.score_after.home},{" "}
             {periodLabel(t.period, t.period_type)} {clock(t.t_period_s)}. Magnitude{" "}
-            {t.magnitude.toFixed(1)}.
+            {magnitude(t.magnitude)}.
           </div>
         </div>
       </Link>
@@ -58,7 +58,7 @@ export function TremorLine({
               : "font-extrabold"
         }`}
       >
-        {t.magnitude.toFixed(1)}
+        {magnitude(t.magnitude)}
       </div>
       <div className="min-w-0 text-[13px]">
         <div className="truncate font-semibold">
@@ -88,6 +88,14 @@ export function TremorLine({
             <span className="text-ink-soft">No team's odds moved by 0.1 pp</span>
           )}
         </div>
+        {/* A goal between two near-locks barely touches the race but can
+            still swing the game; say so, or a row of small numbers reads as
+            broken. */}
+        {t.magnitude < 1 && !t.overturned && !t.shootout && (
+          <div className="text-[12px] text-ink-soft">
+            {t.team} win chance {pct(winChance(t, "before"), 0)} to {pct(winChance(t, "after"), 0)}
+          </div>
+        )}
         {mine &&
           myTeam &&
           !movers.some((d) => d.team === myTeam) &&
@@ -99,6 +107,13 @@ export function TremorLine({
       </div>
     </Link>
   );
+}
+
+/** The scoring team's chance to win the game, before or after the goal. */
+function winChance(t: Tremor, when: "before" | "after"): number {
+  const w = when === "before" ? t.wp_before : t.wp_after;
+  const home = w.home_reg + w.home_ot + w.home_so;
+  return t.team === t.home ? home : 1 - home;
 }
 
 export function TremorFeed({ limit = 12 }: { limit?: number }) {

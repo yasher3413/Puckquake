@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
+import { magnitude } from "../lib/format";
 import { useClock } from "../live/clock";
 import { useLive } from "../live/store";
 import { SPEEDS } from "../live/timeline";
@@ -265,8 +266,8 @@ export function Seismograph() {
                 type="button"
                 className={marker}
                 style={{ left: group.x }}
-                aria-label={`Open tremor, ${tremorById.get(spike.id)?.scorer?.name ?? "Goal"}, ${timeLabel(spike.at)}, magnitude ${spike.magnitude.toFixed(1)}`}
-                title={`${tremorById.get(spike.id)?.scorer?.name ?? "Goal"} (${tremorById.get(spike.id)?.team ?? ""}), ${timeLabel(spike.at)}: magnitude ${spike.magnitude.toFixed(1)}`}
+                aria-label={`Open tremor, ${tremorById.get(spike.id)?.scorer?.name ?? "Goal"}, ${timeLabel(spike.at)}, magnitude ${magnitude(spike.magnitude)}`}
+                title={`${tremorById.get(spike.id)?.scorer?.name ?? "Goal"} (${tremorById.get(spike.id)?.team ?? ""}), ${timeLabel(spike.at)}: magnitude ${magnitude(spike.magnitude)}`}
                 onPointerDown={(e) => e.stopPropagation()}
                 onClick={() => navigate(`/tremor/${spike.id}`)}
               >
@@ -310,7 +311,7 @@ export function Seismograph() {
                       </span>
                       <span className="mt-1 flex justify-between gap-2 text-[12px] text-ink-soft">
                         <span>{timeLabel(s.at)}</span>
-                        <span>Magnitude {s.magnitude.toFixed(1)}</span>
+                        <span>Magnitude {magnitude(s.magnitude)}</span>
                       </span>
                     </button>
                   ))}

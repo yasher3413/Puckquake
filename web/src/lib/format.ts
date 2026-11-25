@@ -32,8 +32,10 @@ export function arrow(delta: number): string {
   return d === "up" ? "▲" : d === "down" ? "▼" : "";
 }
 
+/** A goal's magnitude to one decimal. Under 0.05 reads "<0.1", not "0.0":
+ * the goal did move the race, just less than the scale shows. */
 export function magnitude(m: number): string {
-  return m.toFixed(1);
+  return m < 0.05 ? "<0.1" : m.toFixed(1);
 }
 
 /** mm:ss from seconds. */

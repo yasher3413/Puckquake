@@ -1,5 +1,6 @@
 import { Application, Container, Graphics, Sprite, Text, Texture } from "pixi.js";
 import type { GeoProjection } from "d3-geo";
+import { magnitude } from "../lib/format";
 import { drawBasemap, loadGeo, readPalette, type Geo, type Palette } from "./basemap";
 import { layoutNodes, type NodeOut } from "./layout";
 import { makeProjection, placeVenue, type Placed, type Viewport } from "./projection";
@@ -468,7 +469,7 @@ export class MapController {
 
     // Magnitude at the origin, or "No goal" when reversed. It claims its
     // space first; the teams' change labels then flow around it.
-    const mText = reverse ? "No goal" : `M ${q.magnitude.toFixed(1)}`;
+    const mText = reverse ? "No goal" : `M ${magnitude(q.magnitude)}`;
     // Size follows magnitude: a 0.2 is a footnote, a 6 is a headline.
     const mSize = reverse ? 15 : Math.round(17 + Math.min(q.magnitude, 6) * 2);
     const mStart = now + (reverse ? dur : 0);

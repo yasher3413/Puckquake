@@ -4,7 +4,7 @@ import type { GamePreview, Tremor } from "../api/types.gen";
 import { LineChart } from "../charts/LineChart";
 import { Rink } from "../charts/Rink";
 import { useWidth } from "../charts/useWidth";
-import { clock, liveClock, localTime, pct, periodLabel, pp } from "../lib/format";
+import { clock, liveClock, localTime, magnitude, pct, periodLabel, pp } from "../lib/format";
 import { TeamLogo } from "../components/TeamLogo";
 import { useDocumentMeta } from "../lib/meta";
 import { PageLoading } from "../components/PageLoading";
@@ -18,7 +18,7 @@ function gameShare(g: GameSummary, biggest: Tremor | undefined): ShareSpec {
   const started = g.home_score != null && g.state !== "FUT" && g.state !== "PRE";
   const live = g.state === "LIVE" || g.state === "CRIT";
   const lead = biggest
-    ? `, led by ${biggest.scorer?.name ?? `a ${biggest.team} goal`} at magnitude ${biggest.magnitude.toFixed(1)}`
+    ? `, led by ${biggest.scorer?.name ?? `a ${biggest.team} goal`} at magnitude ${magnitude(biggest.magnitude)}`
     : "";
   return {
     label: "Share game",
@@ -44,7 +44,7 @@ function Ripple({ t }: { t: Tremor }) {
     <div className="py-3">
       <div className="flex items-baseline gap-3">
         <Link to={`/tremor/${t.id}`} className="display text-[28px] font-extrabold">
-          {t.magnitude.toFixed(1)}
+          {magnitude(t.magnitude)}
         </Link>
         <div className="text-[14px]">
           {t.scorer ? (
@@ -277,7 +277,7 @@ export default function GamePage() {
                       to={`/tremor/${biggest.id}`}
                       className="display text-[28px] font-bold leading-none underline-offset-4 hover:underline"
                     >
-                      M{biggest.magnitude.toFixed(1)}{" "}
+                      M{magnitude(biggest.magnitude)}{" "}
                       <span className="font-[family-name:var(--font-text)] text-[15px] font-semibold tracking-normal">
                         {biggest.scorer?.name ?? biggest.team},{" "}
                         {periodLabel(biggest.period, biggest.period_type)}{" "}

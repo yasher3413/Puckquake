@@ -3,7 +3,7 @@ import { Link } from "react-router";
 import type { ShotOut, Tremor } from "../api/types.gen";
 import { Headshot } from "../components/Headshot";
 import { TeamLogo } from "../components/TeamLogo";
-import { clock, pct, periodLabel, pp } from "../lib/format";
+import { clock, magnitude, pct, periodLabel, pp } from "../lib/format";
 import { useDarkScheme } from "../lib/useMedia";
 
 const SHOT_TYPES: Record<string, string> = {
@@ -61,7 +61,7 @@ function ShotCard({ shot, tremor, season }: { shot: ShotOut; tremor?: Tremor; se
       {tremor && (
         <div className="mt-2 flex items-baseline justify-between">
           <span>
-            <span className="display text-[20px] font-bold">{tremor.magnitude.toFixed(1)}</span>{" "}
+            <span className="display text-[20px] font-bold">{magnitude(tremor.magnitude)}</span>{" "}
             <span className="text-ink-soft">magnitude</span>
           </span>
           {own && (

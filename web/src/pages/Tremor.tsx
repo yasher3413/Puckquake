@@ -1,7 +1,7 @@
 import { Link, useParams } from "react-router";
 import { useStateQuery, useTremor, isNotFound } from "../api/client";
 import { useWidth } from "../charts/useWidth";
-import { clock, periodLabel, pp, pct } from "../lib/format";
+import { clock, magnitude, periodLabel, pp, pct } from "../lib/format";
 import { useDocumentMeta } from "../lib/meta";
 import { MiniMap } from "../map/MiniMap";
 import { Headshot } from "../components/Headshot";
@@ -18,7 +18,7 @@ function goalShare(t: Tremor): ShareSpec {
   const odds = Math.abs(t.ppa) >= 0.0005 ? `, ${t.team} playoff odds ${pp(t.ppa)}` : "";
   return {
     label: "Share goal",
-    tweet: `${who} (${t.team}) scored a magnitude ${t.magnitude.toFixed(1)} goal against ${t.opponent}${odds}. See how far it shook the playoff race:`,
+    tweet: `${who} (${t.team}) scored a magnitude ${magnitude(t.magnitude)} goal against ${t.opponent}${odds}. See how far it shook the playoff race:`,
     link: async () => `${window.location.origin}/tremor/${t.id}`,
     // X shows a landscape picture best; the share sheet gets the tall card.
     image: (use) => fetchCard(`/api/og/tremor/${t.id}.png${use === "x" ? "" : "?size=card"}`),
@@ -34,7 +34,7 @@ export default function TremorPage() {
   const { data: t, isLoading, isError, error, refetch } = useTremor(id);
   const state = useStateQuery();
   const [ref, width] = useWidth<HTMLDivElement>(640);
-  const title = t ? `${t.scorer?.name ?? t.team}: magnitude ${t.magnitude.toFixed(1)}` : "Tremor";
+  const title = t ? `${t.scorer?.name ?? t.team}: magnitude ${magnitude(t.magnitude)}` : "Tremor";
   useDocumentMeta(
     title,
     t
@@ -56,8 +56,9 @@ export default function TremorPage() {
   const moved = t.deltas.filter((d) => Math.abs(d.d_playoffs) >= 0.0005);
   const still = t.deltas.filter((d) => Math.abs(d.d_playoffs) < 0.0005);
   const own = t.deltas.find((d) => d.team === t.team);
+  // A team already near in or near out barely moves; say where it stood.
   const settled =
-    own && (own.p_playoffs_after >= 0.995 || own.p_playoffs_after <= 0.005)
+    own && (own.p_playoffs_after >= 0.95 || own.p_playoffs_after <= 0.05)
       ? own.p_playoffs_after
       : null;
   const date = new Date(`${t.night_date}T12:00:00Z`).toLocaleDateString(undefined, {
@@ -80,7 +81,7 @@ export default function TremorPage() {
           </p>
           <div className="mt-3 flex items-end gap-4">
             <div className="display text-[120px] font-extrabold leading-[0.8] text-goal">
-              {t.magnitude.toFixed(1)}
+              {magnitude(t.magnitude)}
             </div>
             <div className="pb-2 text-[13px] text-ink-soft">
               Magnitude
@@ -149,9 +150,14 @@ export default function TremorPage() {
             <dt className="text-ink-soft">Playoff Probability Added</dt>
             <dd className="text-right tabular-nums">
               {pp(t.ppa)}
-              {Math.abs(t.ppa) < 0.0005 && settled != null && (
+              {Math.abs(t.ppa) < 0.005 && settled != null && (
                 <span className="block text-[12px] text-ink-soft">
-                  {t.team} {settled >= 0.995 ? "was already in" : "was already out"}
+                  {t.team}{" "}
+                  {settled >= 0.995
+                    ? "was already in"
+                    : settled <= 0.005
+                      ? "was already out"
+                      : `was already at ${pct(settled, 0)}`}
                 </span>
               )}
             </dd>

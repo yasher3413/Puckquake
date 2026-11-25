@@ -4,7 +4,7 @@ import type { RootingLine } from "../api/types.gen";
 import { Bars } from "../charts/Bars";
 import { SeasonSeismogram, TeamRing, type Spike } from "../charts/TeamBoard";
 import { useWidth } from "../charts/useWidth";
-import { localTime, pct, pp } from "../lib/format";
+import { localTime, magnitude, pct, pp } from "../lib/format";
 import { MODEL_CHANGES } from "../lib/modelChanges";
 import { useDocumentMeta } from "../lib/meta";
 import { useMyTeam } from "../lib/myTeam";
@@ -101,7 +101,7 @@ export default function TeamPage() {
         v: d.p_playoffs_after,
         magnitude: tr.magnitude,
         up: d.d_playoffs > 0,
-        label: `Magnitude ${tr.magnitude.toFixed(1)}: ${tr.scorer?.name ?? "Goal"} (${tr.team}), ${pp(d.d_playoffs)} for ${abbrev}`,
+        label: `Magnitude ${magnitude(tr.magnitude)}: ${tr.scorer?.name ?? "Goal"} (${tr.team}), ${pp(d.d_playoffs)} for ${abbrev}`,
       },
     ];
   });
